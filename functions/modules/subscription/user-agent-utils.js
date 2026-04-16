@@ -6,7 +6,7 @@
 /**
  * 判断是否为浏览器请求（用于伪装/公开页逻辑）
  * 排除常见的代理客户端 User-Agent
- * @param {string} userAgent 
+ * @param {string} userAgent
  * @returns {boolean}
  */
 export function isBrowserAgent(userAgent) {
@@ -15,7 +15,7 @@ export function isBrowserAgent(userAgent) {
     // [Updated] Explicitly added: Firefox, Via, UCBrowser, Quark, MQQBrowser (QQ), Konqueror
     const isBrowser = /Mozilla|Chrome|Safari|Edge|Opera|Firefox|Via|UCBrowser|Quark|MQQBrowser|Konqueror/i.test(userAgent);
     // Common proxy client keywords to exclude
-    const isProxyClient = /clash|v2ray|surge|loon|shadowrocket|quantumult|stash|shadowsocks|mihomo|meta|nekobox|nekoray|sfi|sfa|sfra/i.test(userAgent);
+    const isProxyClient = /clash|flclash|v2ray|surge|loon|shadowrocket|quantumult|stash|shadowsocks|mihomo|meta|nekobox|nekoray|sfi|sfa|sfra|sing-box|surfboard|hiddify|egern|dio|dart|flutter|http-client|okhttp|axios|postman/i.test(userAgent);
 
     return isBrowser && !isProxyClient;
 }
@@ -30,7 +30,7 @@ export function determineTargetFormat(userAgent, searchParams) {
     // 1. Check URL parameters first
     let targetFormat = searchParams.get('target');
     if (!targetFormat) {
-        const supportedFormats = ['clash', 'singbox', 'surge', 'loon', 'base64', 'v2ray', 'trojan', 'quanx'];
+        const supportedFormats = ['clash', 'singbox', 'surge', 'loon', 'base64', 'v2ray', 'trojan', 'quanx', 'egern', 'nodes'];
         for (const format of supportedFormats) {
             if (searchParams.has(format)) {
                 // Normalize v2ray/trojan to base64 as they share the output format
@@ -43,7 +43,7 @@ export function determineTargetFormat(userAgent, searchParams) {
     if (targetFormat) {
         const normalizedTarget = targetFormat.toLowerCase();
         if (normalizedTarget === 'singbox' || normalizedTarget === 'sing-box') {
-            return 'base64';
+            return 'singbox';
         }
         if (normalizedTarget === 'surge') {
             const ver = searchParams.get('ver');
@@ -66,9 +66,12 @@ export function determineTargetFormat(userAgent, searchParams) {
         if (surgeMatch) {
             const version = parseInt(surgeMatch[1], 10);
             // Subconverter primarily supports &ver=2, 3, 4. For versions >= 4, use 4.
-            return `surge&ver=${version >= 4 ? 4 : Math.max(2, version)}`;
+            // iOS Surge特别处理：优先使用最新兼容版本
+            const iosSurgeVer = ua.includes('surge/') && !ua.includes('mac') ? 4 : Math.max(2, version);
+            return `surge&ver=${iosSurgeVer}`;
         }
-        return 'surge&ver=4';
+        // 默认iOS Surge使用版本4
+        return ua.includes('surge/') && !ua.includes('mac') ? 'surge&ver=4' : 'surge&ver=4';
     }
 
     // Mapping array to ensure priority order
@@ -85,8 +88,14 @@ export function determineTargetFormat(userAgent, searchParams) {
         // Other Clients
         ['stash', 'clash'],
         ['nekoray', 'clash'],
-        ['sing-box', 'base64'],
-        ['singbox', 'base64'],
+        ['nekobox', 'clash'],
+        ['surfboard', 'clash'],
+        ['cfw', 'clash'],
+        ['clashforwindows', 'clash'],
+        ['egern', 'egern'],
+        ['sing-box', 'singbox'],
+        ['singbox', 'singbox'],
+        ['hiddify', 'singbox'],
         ['shadowrocket', 'base64'],
         ['v2rayn', 'base64'],
         ['v2rayng', 'base64'],

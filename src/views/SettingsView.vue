@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onActivated, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import MigrationModal from '../components/modals/MigrationModal.vue';
 import { useSettingsLogic } from '../composables/useSettingsLogic.js';
 import SettingsLayout from '../components/layout/SettingsLayout.vue';
@@ -31,6 +32,7 @@ const {
 
 // 仅新布局需要的状态
 const activeTab = ref('basic');
+const route = useRoute();
 
 const currentTabLabel = computed(() => {
   switch (activeTab.value) {
@@ -54,6 +56,17 @@ const handleOpenMigrationModal = () => {
 
 onMounted(() => {
   loadSettings();
+});
+
+onActivated(() => {
+  loadSettings();
+});
+
+watch(() => route.path, (path) => {
+  if (path === '/settings') {
+    activeTab.value = 'basic';
+    loadSettings();
+  }
 });
 </script>
 
@@ -80,7 +93,7 @@ onMounted(() => {
       </div>
 
       <div v-else class="space-y-6 max-w-6xl w-full mx-auto">
-        <div class="flex flex-wrap items-center justify-between gap-3 p-4 bg-white/70 dark:bg-gray-900/60 border border-gray-100/80 dark:border-white/10 misub-radius-lg shadow-sm">
+        <div class="hidden md:flex flex-wrap items-center justify-between gap-3 p-4 bg-white/70 dark:bg-gray-900/60 border border-gray-100/80 dark:border-white/10 misub-radius-lg shadow-sm">
           <div>
             <p class="text-xs text-gray-500 dark:text-gray-400">当前模块</p>
             <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ currentTabLabel }}</p>
